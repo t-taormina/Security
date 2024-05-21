@@ -35,7 +35,7 @@ File:
 musles: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-musl-x86_64.so.1, stripped
 ```
 
-Another important note is the binary is an position independent executable (pie). It is also stripped, so no symbols. I could not initially generate the assembly in **gdb** so I used **objdump -d** to get disassembly. This gave me an idea of what was going on. Note, when running the binary there is a time out with an output along the lines of "Alarm". When inspecting the disassembly from **objdump** we can see there is a call to alarm. This will have to be avoided or patched. In **gdb** I was able to place a breakpoint on **__libc_start_main** which allows the addresses to be determined and from here a breakpoint can be placed on **main**.   
+Another important note is the binary is a position independent executable (pie). It is also stripped, so no symbols. I could not initially generate the assembly in **gdb** so I used **objdump -d** to get disassembly. This gave me an idea of what was going on. Note, when running the binary there is a time out with an output along the lines of "Alarm". When inspecting the disassembly from **objdump** we can see there is a call to alarm. This will have to be avoided or patched. In **gdb** I was able to place a breakpoint on **__libc_start_main** which allows the addresses to be determined and from here a breakpoint can be placed on **main**.   
 
 Key functions in main include:  
 - **mmap** which creates a new mapping in the virtual address space of the calling process. 
