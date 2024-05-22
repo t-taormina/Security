@@ -53,7 +53,7 @@ Then, there are multiple calls to **exit** that need to be avoided. I used **jum
 jump *<addr>
 ```
 
-After memcpy, there is a call to ***rax** which contains the loaded shell code that checks for the flag. This function call needs to be stepped into. From here the two values being placed in the registers need to be xored and decoded. The decoding can be done in the following way: 
+After memcpy, there is a call to ***rax** which contains the loaded shell code that checks for the flag. This function call needs to be stepped into. From here the two values being placed in the registers need to be xored and decoded. The decoding can be done in python: 
 
 ```python
 v1 = 0xf3cf3f9d7b8743e3
