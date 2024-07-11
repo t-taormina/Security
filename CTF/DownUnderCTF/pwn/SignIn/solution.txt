@@ -3,4 +3,95 @@ Down Under CTF: pwn: sign-in
 
 Solution:
 
-This problem involves ...
+This challenge uses a linked list that makes use of an entry struct and a user                                                                                                                       
+struct.                                                                                                                                                                                              
+                                                                                                                                                                                                     
+User Struct                                                                                                                                                                                          
+-----------                                                                                                                                                                                          
+typedef struct {                                                                                                                                                                                     
+    long uid;                                                                                                                                                                                        
+    char username[8];                                                                                                                                                                                
+    char password[8];                                                                                                                                                                                
+} user_t;                                                                                                                                                                                            
+                                                                                                                                                                                                     
+                                                                                                                                                                                                     
+Entry Struct                                                                                                                                                                                         
+------------                                                                                                                                                                                         
+typedef struct user_entry user_entry_t;                                                                                                                                                              
+struct user_entry {                                                                                                                                                                                  
+    user_t* user;                                                                                                                                                                                    
+    user_entry_t* prev;                                                                                                                                                                              
+    user_entry_t* next;                                                                                                                                                                              
+};                                                                                                                                                                                                   
+                                                                                                                                                                                                     
+The vulnerability lies in the initialization of the 'entry' struct. The struct                                                                                                                       
+is allocated in the sign_up function:                                                                                                                                                                
+                                                                                                                                                                                                     
+void sign_up() {                                                                                                                                                                                     
+    user_t* user = malloc(sizeof(user_t));                                                                                                                                                           
+    user_entry_t* entry = malloc(sizeof(user_entry_t));                                                                                                                                              
+    user->uid = UID++;                                                                                                                                                                               
+    printf("username: ");                                                                                                                                                                            
+    read(0, user->username, 8);                                                                                                                                                                      
+    printf("password: ");                                                                                                                                                                            
+    read(0, user->password, 8);                                                                                                                                                                      
+    entry->user = user;                                                                                                                                                                              
+                                                                                                                                                                                                     
+    user_entry_t* curr = &user_list;                                                                                                                                                                 
+    while(curr->next) {                                                                                                                                                                              
+        curr = curr->next;                                                                                                                                                                           
+    }                                                                                                                                                                                                
+    entry->prev = curr;                                                                                                                                                                              
+    curr->next = entry;                                                                                                                                                                              
+}
+
+Do you see anything interesting? I didn't at first. I had to get a hint after
+the CTF had finished in order to solve this. The problem is that the entry's 
+next pointer is never initialized or set to NULL. This means that when an entry 
+is allocated and free'd, some of the free'd data can stick around. This means
+if a user is added and then removed, it can be possible to observe the removed 
+user's data. Further more, if we add another user (so add, remove, add) it 
+turns out that the "free'd" password is stored in the newly allocated entry 
+struct. 
+
+Guess what field the password is stored in? 
+
+NEXT! And this is why pointers should be initialized. I previously thought that
+the free() function would wipe the memory in the process of freeing the memory,
+but it actually just adds the memory to a free list for calloc() and malloc()
+to use later. See DigitalRoss's post for a nice explanation.
+
+"https://stackoverflow.com/questions/4704063/how-does-c-free-work" 
+
+So, we can control what value gets stored in an entry's next pointer. What to
+do next? Looking at the code, our goal is to run the system() function call
+that takes "/bin/sh" in order to get a shell. 
+
+            if(uid == 0) {
+                system("/bin/sh");
+            } else {
+                puts("Please sign in as root first!");
+            }
+
+This code runs on the conditions that the user is signed in and that the user 
+has a UID of 0. How can we leverage our sneaky pointer to accomplish this?
+
+Looking at our entry struct, we can see that it contains three pointers.
+Important for us is that the user field is a pointer. This means that we need
+to point our entry's next pointer to an address that contains a pointer.
+
+Entry-ptr -> Usr-ptr
+
+What should this Usr-ptr point to? Really we have lots of options here but one
+requirement needs to be met. The UID needs to be 0. That is, the first 8-bytes
+that the Usr-ptr points to needs to be zero. The next 16-bytes (8 for the
+username, 8 for the password) can be anything so long as they are known.
+Remember, we need to log in. I found an address that pointed to 24-bytes of
+zero's. So now our pointers look like this: 
+
+Entry-ptr-> Usr-ptr-> User { UID: 0, Username: 0, Password: 0} 
+
+Now, at the end of the linked list we have a user with a blank username and
+password and a UID of zero.
+
+Sweet.
