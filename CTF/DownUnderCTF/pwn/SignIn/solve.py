@@ -3,8 +3,9 @@ from pwn import *
 
 #context.terminal = ['tmux', 'splitw', '-h']
 #exe = ELF('sign-in')
-conn = process('./sign-in')
+#conn = process('./sign-in')
 #conn = remote('0.0.0.0', 1337)
+conn = remote('2024.ductf.dev', 30022)
 #gdb.attach(conn, "b *sign_up+4")
 
 # DownUnder had these lambda's on their github and I thought it looked clean. 
