@@ -13,7 +13,19 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "OSCP/SQL-injections.md",
+                "file": "oscp-navigator.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "aaaa1f5d93b8b21c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "OSCP/Common-web-application-attacks.md",
                 "mode": "source",
                 "source": false
               }
@@ -85,7 +97,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "OSCP/SQL-injections.md",
+                "file": "oscp-navigator.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +114,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "OSCP/SQL-injections.md",
+                "file": "oscp-navigator.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +137,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "OSCP/SQL-injections.md"
+                "file": "oscp-navigator.md"
               }
             }
           }
@@ -148,10 +160,13 @@
   },
   "active": "807a948c9e4b5007",
   "lastOpenFiles": [
-    "OSCP/Common-web-application-attacks.md",
-    "OSCP/Enumeration.md",
+    "OSCP/Public-Exploits.md",
+    "OSCP/Fixing-Exploits.md",
     "OSCP/SQL-injections.md",
+    "OSCP/Enumeration.md",
+    "OSCP/Common-web-application-attacks.md",
     "oscp-navigator.md",
+    "SQL Injections.md",
     "OSCP/SQL Injections.md",
     "OSCP/Common web application attacks.md",
     "OSCP Navigator.md",

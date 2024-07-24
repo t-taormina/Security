@@ -3,3 +3,6 @@ This file will contain links to all files in the OSCP folder. Each file contains
 [[Enumeration]]
 [[Common web application attacks]]
 [[SQL Injections]]
+[[Public-Exploits]]
+[[Fixing-Exploits]]
+

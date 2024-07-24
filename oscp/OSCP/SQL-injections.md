@@ -146,7 +146,7 @@ wpscan --url http://alvida-eatery.org
 sudo john --wordlist=/usr/share/wordlists/rockyou.txt hash.txt
 
 # Find flag.txt on linux system
-find /* -iname "*.txt" 2>/dev/null
+find /* -iname "flag.txt" 2>/dev/null
 ```
 
 - Capstone 2
