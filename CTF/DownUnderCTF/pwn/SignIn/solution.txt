@@ -55,7 +55,7 @@ that the "free'd" password is stored in the newly allocated entry struct.
 
 Guess what field the password is stored in? 
 
-NEXT! And this is why pointers should be initialized. I previously thought that
+NEXT! This is why pointers should be initialized. I previously thought that
 the free() function would wipe the memory in the process of freeing the memory,
 but it actually just adds the memory to a free list for calloc() and malloc()
 to use later. See DigitalRoss's post for a nice explanation.
@@ -86,7 +86,7 @@ requirement needs to be met. The UID needs to be 0. That is, the first 8-bytes
 that the Usr-ptr points to needs to be zero. The next 16-bytes (8 for the
 username, 8 for the password) can be anything so long as they are known.
 Remember, we need to log in. I found an address that pointed to 24-bytes of
-zero's. So now our pointers look like this: 
+zero's. See "find_zeros.py". So, our pointers look like this: 
 
 Entry-ptr-> Usr-ptr-> User { UID: 0, Username: 0, Password: 0} 
 
