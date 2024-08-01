@@ -1,0 +1,11 @@
+V address to string 'XXXXX'= 0x417eb0
+v address = 0x4051f0
+DUCTF address = 0x7fffffffcd12
+address to 'DUCTF' = 0x417ed0
+input buffer = 0x4051e0
+
+
+addresses stored at 0x4051f0 
+1) 0x00417ed0
+2) 0x00417eb5
+

