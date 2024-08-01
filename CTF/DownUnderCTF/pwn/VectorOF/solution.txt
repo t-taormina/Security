@@ -174,14 +174,14 @@ in order to determine the size. This was a light bulb moment for me.
 Armed with this information, what are you thinking? This is a good point to
 minimize the writeup and try on your own. 
 
-The goal is to write pointers to vector address. What pointers? Pointers that
-contain the string 'DUCTF' since we will still need to pass the comparison
+The goal is to write pointers to the vector address. What pointers? Pointers 
+that contain the string 'DUCTF' since we will still need to pass the comparison
 logic in the for loop. We have an option here. We already have a string
 'DUCTF' provided to us in the "d" pointer. Additionally, we have control over
 the "buf" variable. If we can determine the start address of either of these
-strings, we are in business. We need to write the start address into the first
-8-bytes of the vector and then add 5-bytes to the start address and write that
-into the vector. We need to maintain alignment so there may be 0-padding
+strings, we should be in business. We need to write the start address into the 
+first 8-bytes of the vector and then add 5-bytes to the start address and write 
+that into the vector. We need to maintain alignment so there may be 0's padding
 needed when writing into the vector. 
 
 I used the "buf" variable and my payload is as follows: 
@@ -196,8 +196,8 @@ This is for the remote instance provided for the CTF. Notice the usage of
 	interactive-shell
 
 The payload will not work without it. It is likely that you will need 
-something similar in future CTF's. I'll leave it to the reader to translate 
-this payload in order for it to work locally. 
+something similar in future CTF's. Write it down, remember it. I'll leave it to
+the reader to translate this payload in order for it to work locally. 
 
 Happy hacking :)
 

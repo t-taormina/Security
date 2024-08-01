@@ -97,3 +97,6 @@ password and a UID of zero.
 Sweet. I think the key for this one is seeing that we have a next pointer not
 getting initialized. Investigating from there should lead you towards the
 solution. 
+
+Happy hacking :)
+
